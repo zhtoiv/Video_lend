@@ -1,0 +1,612 @@
+#include<iostream>
+#include<fstream>
+#include<iomanip>
+#include<string>
+#include<cstring>
+#include<windows.h>
+#include<fstream>
+using namespace std;
+
+class video        //基类，定义cd,dvd,vcd三种类别的共同属性和输入操作
+{
+protected:
+	char name[40];				//影碟名称
+	int type;  
+	double price, allprice;			//影碟租价，总租金
+	int amount;			//库存数量，出租数目
+	int year, month,day;
+public:
+	video(void)
+	{
+		num = 0;           //影碟编号
+		name[0] = 0;	
+		type = 0;			//影碟类别
+		price = 0;			
+		amount = 0;			
+		year=0;				//本地时间（年）
+		month=0;			//本地时间（月）
+		day=0;				//本地时间（日）
+		next = 0;
+	}
+	virtual ~video(void){}
+	 int numCheck(char numCheck[])	//该函数用于判断输入的值（用char类型数组接收）是否为整数。如果不是，返回-1；如果是，返回该整数值
+{
+	int i;
+
+	for(i = 0; i < 3 && numCheck[i] != '\0'; i++)
+	{
+		while(!(numCheck[i] >= '0' && numCheck[i] <= '9'))
+		{
+			return -1;
+		}
+	}
+
+	return atoi(numCheck);				//将字符转换为整数返回
+}
+	
+	video * next;					//对象指针
+	int num;
+	
+	virtual void Input()			 //初始化（输入影碟信息）
+	{
+		char snum[3];				//定义为字符型的，用来控制输入，通过numCheck后转换为整形
+		char sprice[3];
+
+		cout<<"请输入影碟编号(库存上线为1000):";
+		cin>>snum;
+		while (numCheck(snum) <= 0 || strlen(snum) > 3)		
+		{													//对输入进行控制
+			cout<<"输入错误！请重新输入：";
+			cin>>snum;
+		}
+		num = numCheck(snum);			//numCheck返回整形值
+		cout<<"请输入影碟名称:"; 
+		cin>>name;
+		cout<<"影碟的租价(0-1000):";
+		cin>>sprice;
+		while(numCheck(sprice) <= 0 || strlen(sprice) > 3)	
+		{													
+			cout<<"输入错误！请重新输入：";
+			cin>>sprice;
+		}
+		price = numCheck(sprice);
+
+		cout<<"入库日期为："; 
+	    SYSTEMTIME sys;
+		GetLocalTime(&sys);				//获得本地时间
+		int year,month,day;
+		year=sys.wYear;month=sys.wMonth;day=sys.wDay;
+		cout<<year<<"-"<<month<<"-"<<day<<endl;
+		cout<<"公司的库存数量：";
+		cin>>amount;
+	}
+
+	virtual void Input(ifstream &f)  
+	{ 
+		f>>num>>name[40]>>type>>price>>year>>"-">>month>>"-">>day>>amount;
+	}
+	virtual void Output(void)=0;	//读取值为空 
+	virtual void Output(ofstream& f)=0;  
+
+	friend class Store;			
+};
+
+class CD:virtual public video		//video定义为虚基类，公有继承video，避免后面对象实现时的二义性
+{
+public:								//构造函数，对类型进行初始化
+	CD(){type=1;}  
+	virtual void Output(void)
+	{
+		 SYSTEMTIME sys;
+		GetLocalTime(&sys);
+		int year,month,day;
+		year=sys.wYear;month=sys.wMonth;day=sys.wDay;
+		cout<<setw(6)<<num;             
+		cout<<setw(10)<<name;           
+		cout<<setw(10)<<type;         
+		cout<<setw(10)<<price; 
+		cout<<setw(10)<<year<<"-"<<month<<"-"<<day;
+		cout<<setw(6)<<amount<<endl;   
+	}
+	virtual void Output(ofstream& f)			//用输出流输出到文件中
+	{
+		 SYSTEMTIME sys;
+		GetLocalTime(&sys);
+		int year,month,day;
+		year=sys.wYear;month=sys.wMonth;day=sys.wDay;
+		f<<setw(6)<<num;              
+		f<<setw(10)<<name;          
+		f<<setw(10)<<type;           
+		f<<setw(8)<<price; 
+		f<<setw(12)<<year<<"-"<<month<<"-"<<day;
+		f<<setw(8)<<amount<<endl;   
+	 }
+};
+
+class DVD:virtual public  video
+{
+public:
+	DVD(void)
+	{
+		type=2;
+	}
+	virtual void Output(void)			//输出影碟相关信息
+	{
+		 SYSTEMTIME sys;
+		GetLocalTime(&sys);
+		int year,month,day;
+		year=sys.wYear;month=sys.wMonth;day=sys.wDay;
+		cout<<setw(6)<<num;
+		cout<<setw(10)<<name;
+		cout<<setw(10)<<type;
+		cout<<setw(10)<<price;
+		cout<<setw(10)<<year<<"-"<<month<<"-"<<day;
+		cout<<setw(6)<<amount<<endl;
+	}
+	virtual void Output(ofstream& f)			//输出到文件中
+	{ 
+		 SYSTEMTIME sys;
+		GetLocalTime(&sys);
+		int year,month,day;
+		year=sys.wYear;month=sys.wMonth;day=sys.wDay;
+		f<<setw(6)<<num;
+		f<<setw(10)<<name;
+		f<<setw(10)<<type;
+		f<<setw(8)<<price;
+		f<<setw(12)<<year<<"-"<<month<<"-"<<day;
+		f<<setw(8)<<amount<<endl;
+	}
+};
+
+class VCD:virtual public  video  
+{
+public:
+	VCD(void)
+	{
+		type=3;
+	}
+
+	virtual void Output()			//输出影碟信息
+	{
+		 SYSTEMTIME sys;
+		GetLocalTime(&sys);
+		int year,month,day;
+		year=sys.wYear;month=sys.wMonth;day=sys.wDay;
+		cout<<setw(6)<<num;
+		cout<<setw(10)<<name;
+		cout<<setw(10)<<type;
+		cout<<setw(10)<<price;
+		cout<<setw(10)<<year<<"-"<<month<<"-"<<day;
+		cout<<setw(6)<<amount<<endl;
+	}
+
+	virtual void Output(ofstream& f)
+	{
+		 SYSTEMTIME sys;
+		GetLocalTime(&sys);
+		int year,month,day;
+		year=sys.wYear;month=sys.wMonth;day=sys.wDay;
+		f<<setw(6)<<num;
+		f<<setw(10)<<name;
+		f<<setw(10)<<type;
+		f<<setw(8)<<price;
+		f<<setw(12)<<year<<"-"<<month<<"-"<<day;
+		f<<setw(8)<<amount<<endl;
+	}
+};
+
+class Store//定义各操作函数
+{
+private:
+	video * GL;
+public:
+	Store(void)			//构造函数
+	{
+		GL=new CD;   //动态申请空间
+	}
+	~Store(void)
+	{
+		video * p; 
+		p=GL;
+
+		while(p)
+		{
+			GL=p->next; 
+			delete p;    //释放对象指针p所指向的空间
+			p=GL; 
+		}
+	}
+	void add(void);
+	void search(void);
+	void sent(void);
+	void returnvideo();
+	void restor(int i);
+
+};
+
+void Store::add(void)		//增加影碟信息
+{
+
+	ifstream ReadFile;		//输入流文件
+	int n=-1;
+	char line[512];			//用于读取文件内容
+	ReadFile.open("video.txt",ios::in);			//ios::in 表示以只读的方式读取文件
+	if (!ReadFile)								//如果数据文件不存在
+	{
+		char ch;								//定义一个char型变量用于接收用户选择
+		cout<<"不存在“video.txt”文件，请先按‘y’对库存进行设置！";
+		cin>>ch;							//接收用户选择
+		n=1;
+		if (ch == 'y')							//如果用户按Y键
+		{										//创建数据文件
+			ofstream creat("video.txt", ios::out);
+			creat<<setw(6)<<"编号"<<setw(11)<<"影碟名称"<<setw(11)<<"影碟类别"<<setw(9)<<"租价"<<setw(14)<<"入库日期"<<setw(9)<<" 库存\n";
+			cout<<endl<<"已经成功创建“video.txt”文件！"<<endl;
+		}
+	}
+	else							//文件存在
+	{
+	while(!ReadFile.eof())			//控制读到文件结束就停止
+	{
+	ReadFile.getline(line,512,'\n');		//一次读取一行
+	n++;					//每读取一行记录行数变量加1
+	}
+	}
+	cout<<"现在库存的编号为:"<<n-1<<endl;
+	cout<<"添加时请从"<<n<<"号开始编号入库!"<<endl;			//输出记录的行数，提醒入库开始编号
+	ReadFile.close();								//关闭文件
+
+	cout<<"\n** 增加影碟的相关信息 **\n";
+
+	video *p = GL;						//影碟类的对象指针
+
+	while(p->next)    //将p指向当前队列的最后一个，在其后面实现插入。
+		p = p->next;
+
+	char ch;
+	video *p2;
+	
+	for(int i = 0; i < 10; i++)
+	{
+		int s=0;			//用于记录是否修改了输入内容
+		cout<<"输入影碟分类码[1=CD, 2=DVD, 3=VCD]:";
+		cin>>ch;
+		switch(ch)
+		{
+			case '1':  
+				p2=new CD;				//用new来申请新的空间
+				break;
+			case '2': 
+				p2=new DVD; 
+				break;
+			case '3': 
+				p2=new VCD; 
+				break;
+			default: 
+				return;
+		}
+		p->next = p2;			//将新申请的空间插入到当前队列的最后
+		p2->Input();		    //对此空间进行初始化
+		cout<<"是否需要检查当前输入后再入库：（y/n）";     //用于修改输入信息
+		cin>>ch;
+		if(ch == 'Y' || ch == 'y')
+		{
+			cout<<"\n** 影碟信息列表 **\n";
+			cout<<setw(6)<<"编号"<<setw(11)<<"影碟名称"<<setw(11)<<"影碟类别"<<setw(10)<<"租价"<<setw(14)<<"入库日期"<<setw(9)<<" 库存\n";
+			p2->Output();			//输出刚刚输入的信息用来检查输入
+			cout<<"是否需要删除重写：（y/n）";		//如果输入错误，删除后重新输入
+			cin>>ch;
+			if(ch == 'Y' || ch == 'y')
+				{  
+					p2->next=p->next;			//将当前队列中最后一个对象指针的后继指针指向自己
+					delete p2;					//删除刚刚添加进来的需要修改的对象的内容
+					cout<<"成功删除！"<<endl;
+					s=1;			//标记修改，若修改了，则为1，提示后面不需保存
+				}
+		}
+	
+		if(s == 0)			//若没有修改，则入库，即写入文件中
+		{
+			ofstream read("video.txt", ios::app);		//ios::app读取文件并在文件后面进行追加
+			SYSTEMTIME sys;
+			GetLocalTime(&sys);
+			int year,month,day;
+			year = sys.wYear;
+			month = sys.wMonth;
+			day = sys.wDay;
+			read<<setw(6)<<p2->num<<setw(10)<<p2->name<<setw(10)<<p2->type
+			<<setw(9)<<p2->price<<setw(12)<<year<<"-"<<month<<"-"<<day<<setw(8)<<p2->amount<<endl;
+		cout<<"已将影碟成功入库！";
+		}
+		p = p->next;					//p指向当前队列的最后，用来连接继续入队的队列
+	printf("是否继续输入：(Y/N)?");
+		cin>>ch;
+		if(ch == 'Y' || ch == 'y')			//如果要继续增加，则计数变量累加，继续for循环，增加库存，限制一次最多增加10个，可以更多
+		{
+			i++;
+			
+		}
+		else
+		{
+			return;
+		}
+	}
+}
+
+
+
+void Store::search()			//查询影碟信息
+{
+	string choice,sno,sname,stype,sprice,sdate,sstore;		//将从文件中读取的信息保存在string 类型中
+	fstream read("video.txt");
+		if(!read)
+	{
+		cout<<"文件打开失败！";
+		exit(1);
+	}
+	cout<<"请输入待查询影碟编号：";
+	cin>>choice;
+	while(!read.eof())		//读到文件结尾则退出
+	{
+		read>>sno;			//读出影碟的编号进行匹对
+		if(choice == sno)break;		//如果匹对成功，则断开循环，进行后面的输出
+		else
+		{
+			for(int i=0;i<5;i++)    //若没有找到，则将read读取指针后移5步，读取第二行的影碟编号
+			read>>sno;	
+		}
+	}
+		if(choice == sno)			//若匹对成功，输出影碟相关信息
+		{
+			cout<<"所查的影碟信息如下："<<endl;
+			cout<<setw(6)<<"编号"<<setw(11)<<"影碟名称"<<setw(11)<<"影碟类别"<<setw(10)<<"租价"<<setw(14)<<"入库日期"<<setw(9)<<" 库存\n";
+			read>>sname;
+			read>>stype;
+			read>>sprice;
+			read>>sdate;
+			read>>sstore;
+			cout<<setw(6)<<sno<<setw(11)<<sname<<setw(11)<<stype<<setw(10)<<sprice
+			<<setw(14)<<sdate<<setw(9)<<sstore<<endl;	
+		}
+		else
+		{
+			cout<<"库存中不存在该影碟！";
+		}
+		
+}
+ int numCheck(char numCheck[])	//该函数用于判断输入的值（用char类型数组接收）是否为整数。如果不是，返回-1；如果是，返回该整数值
+{
+	int i;
+
+	for(i = 0; i < 3 && numCheck[i] != '\0'; i++)
+	{
+		while(!(numCheck[i] >= '0' && numCheck[i] <= '9'))
+		{
+			return -1;
+		}
+	}
+
+	return atoi(numCheck);
+}
+
+void Store::sent() //出租
+{
+	string sno,sname,stype,sdate,sentNum,sstore,sprice,choice;   //出租的编号，名字，类别，日期，数目，库存，租价,将出租的编号
+	char Day[3];
+	double allprice;			//租金
+	int day;					//租出去的天数
+
+	fstream read("video.txt");
+	if(!read)
+	{
+		cout<<"文件打开失败！";
+		exit(1);
+	}
+	cout<<"请输入待出租影碟编号：";
+	cin>>choice;
+	while(!read.eof())    //读取文件编号进行匹配
+	{
+		read>>sno;			
+
+		if(choice == sno)break;
+		else
+		{
+			for(int i=0;i<5;i++)
+			read>>sno;	
+		}
+	}
+		if(choice == sno)		//若库存中存在将要出租的影碟信息，则打印以确定
+		{
+			cout<<"所要出租的影碟信息如下："<<endl;
+			cout<<setw(6)<<"编号"<<setw(11)<<"影碟名称"<<setw(11)<<"影碟类别"<<setw(10)<<"租价"<<setw(14)<<"入库日期"<<setw(9)<<" 库存\n";
+			read>>sname;
+			read>>stype;
+			read>>sprice;
+			read>>sdate;
+			read>>sstore;
+			cout<<setw(6)<<sno<<setw(11)<<sname<<setw(11)<<stype<<setw(10)<<sprice
+			<<setw(14)<<sdate<<setw(9)<<sstore<<endl;	
+			cout<<"请输入库存范围内的出租数目：";
+			cin>>sentNum;
+			while(sentNum>sstore)		//若要出租的数目大于库存，则提示错误，从新输入
+			{
+				cout<<"库存不足，请重新输入！";
+					cin>>sentNum;
+			}
+				cout<<"请输入出租天数(最多不超过3个月，即90天)：";			//对出租的天数进行限制，最多出租3个月
+				cin>>Day;
+				while(numCheck(Day) <= 0 || strlen(Day) > 3 || atoi(Day) > 90)		
+					{													//如果输入错误，提示重新输入
+						cout<<"输入错误！请重新输入：";
+						cin>>Day;
+					}
+				day = numCheck(Day);				//将检验后的合法输入转换为整形
+                int i = atoi(sentNum.c_str());		//将string类型转换为整形进行计算
+				int j = atoi(sprice.c_str());
+				int s = atoi(sstore.c_str());
+				allprice = i*j*day;		//计算出租的总价
+				cout<<"总租价为："<<allprice<<endl;
+				cout<<setw(6)<<"编号"<<setw(11)<<"影碟名称"<<setw(11)<<"影碟类别"			//输出出租信息
+				<<setw(9)<<"租价"<<setw(12)<<"数目"<<setw(10)<<"天数"<<setw(10)<<"总租金\n";
+				cout<<setw(6)<<sno<<setw(11)<<sname<<setw(11)<<stype<<setw(9)<<sprice
+				<<setw(12)<<sentNum<<setw(10)<<day<<setw(10)<<allprice<<endl;
+				ifstream ReadFile;
+				ReadFile.open("出租.txt",ios::in);			//ios::in 表示以只读的方式读取文件
+				if (!ReadFile)								//如果数据文件不存在
+				{
+					char ch;								//定义一个char型变量用于接收用户选择
+					cout<<"不存在“出租.txt”文件，请先按‘y’对库存进行设置！";
+					cin>>ch;							//接收用户选择
+					if (ch == 'y')							//如果用户按Y键
+					{										//创建数据文件
+					ofstream creat("出租.txt", ios::out);
+					creat<<setw(6)<<"编号"<<setw(11)<<"影碟名称"<<setw(11)<<"影碟类别"			//输出出租信息
+					<<setw(9)<<"租价"<<setw(12)<<"数目"<<setw(10)<<"天数"<<setw(10)<<"总租金\n";
+					cout<<endl<<"已经成功创建“出租.txt”文件！"<<endl;
+					}
+				}
+				ofstream sent("出租.txt", ios::app);
+                    sent<<setw(6)<<sno<<setw(11)<<sname<<setw(11)<<stype<<setw(9)<<sprice
+					<<setw(12)<<sentNum<<setw(10)<<day<<setw(10)<<allprice<<endl;
+					s = s-i;		//计算现在库存
+					read.seekg(-9,ios::cur); read<<setw(9)<<s;			//对库存进行修改，将read指针退回至库存存储位置，进行覆盖写
+					cout<<"出租信息已经保存到“出租.txt”且库存已修改";
+                   sent.close();			//文件关闭
+				   read.close();
+		}
+		else
+			cout<<"库存中不存在该货物,请按任意键退出！";
+}
+void  Store::returnvideo()			//影碟归还
+{
+	string choice,sno,sname,stype,sprice,sdate;
+	int sstore,sentN;    //库存，归还数目
+	fstream read("video.txt");
+		if(!read)
+	{
+		cout<<"文件打开失败！";
+		exit(1);
+	}
+	cout<<"请输入待归还影碟编号：";
+	cin>>choice;
+	while(!read.eof())
+	{
+		read>>sno;
+
+		if(choice == sno)break;
+		else
+		{for(int i = 0; i<5; i++)
+			read>>sno;	
+		}
+	}
+		if(choice == sno)
+		{
+			cout<<"所要归还的影碟现在库存信息如下："<<endl;
+			cout<<setw(6)<<"编号"<<setw(11)<<"影碟名称"<<setw(11)<<"影碟类别"<<setw(10)<<"租价"<<setw(14)<<"入库日期"<<setw(9)<<" 库存\n";
+			read>>sname;
+			read>>stype;
+			read>>sprice;
+			read>>sdate;
+			read>>sstore;
+			cout<<setw(6)<<sno<<setw(11)<<sname<<setw(11)<<stype<<setw(10)<<sprice
+			<<setw(14)<<sdate<<setw(9)<<sstore<<endl;	
+		}
+		else
+		{
+			cout<<"库存中不存在该编号的影碟！";
+			return;
+		}	
+		cout<<"请输入归还数目：";
+		cin>>sentN;
+		sstore = sstore+sentN;   //计算现在库存
+		read.seekg(-9,ios::cur); 
+		read<<setw(9)<<sstore;			//更改库存，覆盖的写
+		cout<<"归还成功，归还信息已经保存到库存中！"<<endl;
+		cout<<setw(6)<<"编号"<<setw(11)<<"影碟名称"<<setw(11)<<"影碟类别"<<setw(10)<<"租价"<<setw(14)<<"入库日期"<<setw(9)<<" 库存\n";
+		cout<<setw(6)<<sno<<setw(11)<<sname<<setw(11)<<stype<<setw(10)<<sprice
+		<<setw(14)<<sdate<<setw(9)<<sstore<<endl;	
+	
+
+}
+void  Store::restor(int i)			//库存查看
+{
+	char buffer[100];			//用来缓存
+	if(i==1)						//对库存进行读取
+	{
+		ifstream read("video.txt", ios::in);
+
+	if(!read.is_open())						//不能正常打开，报错
+	{ 
+		cout<<"Error opening file!"; 
+		exit(-1); 
+	}
+    while(!read.eof())						//将文件读入缓冲区，并将缓冲区内容输出
+	{
+		read.getline(buffer,100);         //读取一行
+		cout<<buffer<<endl;				//输出一行
+	}
+	}
+	else				//对出租库存进行读取
+	{
+		ifstream read("出租.txt", ios::in);
+
+	if(!read.is_open())						//不能正常打开，报错
+	{ 
+		cout<<"Error opening file!"; 
+		exit(-1); 
+	}
+    while(!read.eof())						//将文件读入缓冲区，并将缓冲区内容输出
+	{
+		read.getline(buffer,100);
+		cout<<buffer<<endl;
+	}
+	}
+
+}
+
+void main()
+{
+	char ch;
+	Store s; 
+		do
+	{     
+		cout<<endl;
+		cout<<"\t\t\t\t影碟租赁管理系统\n";
+		cout<<"\t\t\t***** 1－----增加影碟相关信息*\t\n";
+		cout<<"\t\t\t***** 2－——影碟信息查询*****\t\n";
+		cout<<"\t\t\t***** 3－----影碟出租*********\t\n";
+		cout<<"\t\t\t***** 4－----影碟归还*********\t\n";
+		cout<<"\t\t\t***** 5－----库存信息查询*****\t\n";
+		cout<<"\t\t\t***** 6----—出租信息查询*****\t\n";
+		cout<<"\t\t\t***** 7—--—退出*************\t\n";
+		cout<<"请选择(1-7):";
+		cin>>ch;
+
+		switch(ch)
+		{	
+			case '1':
+				s.add();
+				break;
+		
+			case '2':
+				s.search();
+				break;
+			case '3':
+				s.sent();
+				break;
+			case'4':
+				s.returnvideo();
+				break;
+			case '5':
+				s.restor(1);
+				break;
+			case'6':
+			    s.restor(2);
+				break;
+			case'7':
+				break;
+		
+		}
+	}while(ch != '7');
+}
+
